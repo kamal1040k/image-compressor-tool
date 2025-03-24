@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Advanced Image Compression Tool</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    .container {
+      text-align: center;
+      background-color: #ffffff;
+      padding: 20px;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+      width: 80%;
+      max-width: 600px;
+      transition: background 0.3s, color 0.3s;
+    }
+
+    h1 {
+      color: #333;
+    }
+
+    .upload-section {
+      margin: 20px 0;
+      border: 2px dashed #4CAF50;
+      padding: 20px;
+      cursor: pointer;
+    }
+
+    button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 10px 20px;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    .dark-mode {
+      background-color: #222;
+      color: #fff;
+    }
+
+    .dark-mode .container {
+      background-color: #333;
+      color: #fff;
+    }
+
+    .dark-mode .upload-section {
+      border-color: #ddd;
+    }
+
+    .toggle-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .toggle-label {
+      margin-right: 10px;
+    }
+
+    .toggle-switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 25px;
+    }
+
+    .toggle-switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: 0.4s;
+      border-radius: 25px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 18px;
+      width: 18px;
+      left: 4px;
+      bottom: 3.5px;
+      background-color: white;
+      transition: 0.4s;
+      border-radius: 50%;
+    }
+
+    input:checked + .slider {
+      background-color: #4CAF50;
+    }
+
+    input:checked + .slider:before {
+      transform: translateX(24px);
+    }
+
+    .settings {
+      margin: 10px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <h1>Advanced Image Compression Tool</h1>
+
+    <!-- Dark Mode Toggle -->
+    <div class="toggle-container">
+      <span class="toggle-label">Dark Mode</span>
+      <label class="toggle-switch">
+        <input type="checkbox" id="darkModeToggle">
+        <span class="slider"></span>
+      </label>
+    </div>
+
+    <!-- Upload Section -->
+    <div class="upload-section">
+      <p>Upload your images to compress without losing quality.</p>
+      <input type="file" id="imageInput" accept="image/*" multiple>
+    </div>
+
+    <!-- Compression Settings -->
+    <div class="settings">
+      <label for="quality">Compression Quality: </label>
+      <input type="range" id="quality" min="10" max="100" value="70"> 
+      <span id="qualityValue">70%</span>%
+    </div>
+
+    <div class="settings">
+      <label for="format">Output Format: </label>
+      <select id="format">
+        <option value="image/jpeg">JPEG</option>
+        <option value="image/png">PNG</option>
+        <option value="image/webp">WebP</option>
+      </select>
+    </div>
+
+    <button onclick="compressImage()">Compress Image</button>
+
+    <div id="downloadLink" style="margin-top: 20px;"></div>
+  </div>
+
+  <script>
+    // Dark Mode Functionality
+    const darkModeToggle = document.getElementById("darkModeToggle");
+
+    function setDarkMode(enabled) {
+      if (enabled) {
+        document.body.classList.add("dark-mode");
+        localStorage.setItem("darkMode", "enabled");
+        darkModeToggle.checked = true;
+      } else {
+        document.body.classList.remove("dark-mode");
+        localStorage.setItem("darkMode", "disabled");
+        darkModeToggle.checked = false;
+      }
+    }
+
+    function loadDarkMode() {
+      const darkModeState = localStorage.getItem("darkMode");
+      if (darkModeState === "enabled") {
+        setDarkMode(true);
+      } else {
+        setDarkMode(false);
+      }
+    }
+
+    darkModeToggle.addEventListener("change", () => {
+      setDarkMode(darkModeToggle.checked);
+    });
+
+    loadDarkMode();
+
+    // Update quality value display
+    document.getElementById("quality").addEventListener("input", function () {
+      document.getElementById("qualityValue").innerText = this.value;
+    });
+
+    // Image Compression
+    function compressImage() {
+      const file = document.getElementById("imageInput").files[0];
+      const quality = document.getElementById("quality").value / 100;
+      const format = document.getElementById("format").value;
+      const downloadLinkContainer = document.getElementById("downloadLink");
+
+      if (!file) {
+        alert("Please select an image first.");
+        return;
+      }
+
+      const reader = new FileReader();
+
+      reader.onload = function (e) {
+        const img = new Image();
+        img.src = e.target.result;
+
+        img.onload = function () {
+          const canvas = document.createElement("canvas");
+          const ctx = canvas.getContext("2d");
+
+          canvas.width = img.width;
+          canvas.height = img.height;
+          ctx.drawImage(img, 0, 0, img.width, img.height);
+
+          const compressedData = canvas.toDataURL(format, quality);
+
+          const downloadLink = document.createElement("a");
+          downloadLink.href = compressedData;
+          downloadLink.download = `compressed.${format.split('/')[1]}`;
+          downloadLink.textContent = "Download Compressed Image";
+
+          downloadLinkContainer.innerHTML = "";
+          downloadLinkContainer.appendChild(downloadLink);
+        };
+      };
+
+      reader.readAsDataURL(file);
+    }
+  </script>
+
+</body>
+</html>
